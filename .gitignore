@@ -1,0 +1,9 @@
+# IntelliJ IDEA
+.idea/
+
+# Exclude all .iml files
+*.iml
+*.xml
+
+# Exclude other IDEA-specific files/files and folders
+out/
