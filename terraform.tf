@@ -10,7 +10,7 @@ terraform {
 provider "yandex" {
   zone = "ru-central1-a"
   folder_id = var.yandex_folder_id
-  cloud_id = "b1g71e95h51okii30p25"
+  cloud_id = var.yandex_cloud_id
   service_account_key_file = "/Users/nauruz/Documents/hw-bot/terraform/key.json"
 }
 
@@ -45,6 +45,7 @@ resource "yandex_storage_bucket" "bucket" {
   bucket = "gnt-bucket"
 }
 
+# загрузка readme в отдельный бакет
 resource "yandex_storage_object" "readme" {
   bucket = yandex_storage_bucket.bucket.bucket
   key    = "readme.md"
@@ -72,11 +73,15 @@ data "archive_file" "zip" {
   ]
 }
 
+# помимо установки вебхука отменяются прошлые обновления с помощью параметра drop_pending_updates = true
+# сделано это для того, чтобы проще было разрабатывать
+# при новом деплое через terraform apply старые сообщения не будут отправляться в новый деплой
 data http telegram_set_webhook {
   url = "https://api.telegram.org/bot${var.tg_bot_key}/setWebhook?drop_pending_updates=true&url=https://functions.yandexcloud.net/${yandex_function.telegram-bot-function.id}"
   method = "GET"
 }
 
+# возможно, есть более элегантное решение удаления вебхука, но я его не нашел
 resource "null_resource" "on_destroy" {
   provisioner "local-exec" {
     command = <<EOT
@@ -109,6 +114,12 @@ variable "yandex_folder_id" {
   description = "Folder ID."
   type        = string
   default = "b1g11gq2080qsump1g47"
+}
+
+variable "yandex_cloud_id" {
+  description = "Cloud ID."
+  type        = string
+  default = "b1g71e95h51okii30p25"
 }
 
 variable "gpt_token" {
